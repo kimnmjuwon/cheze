@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>숫자 강화하기</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .info-text {
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column; /* 컨테이너를 세로 정렬로 변경 */
+            align-items: center;
+            gap: 20px; /* 요소들 사이 간격 */
+        }
+        .game-area { /* 버튼과 숫자를 감싸는 새로운 영역 */
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        button {
+            padding: 18px 35px;
+            font-size: 1.3em;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background-color: #6a0dad;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            min-width: 180px;
+        }
+        button:hover {
+            background-color: #8a2be2;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        #displayNumber {
+            font-size: 4.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 150px;
+            text-align: center;
+            background-color: #ecf0f1;
+            padding: 20px 0;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        #currentMoney {
+            font-weight: bold;
+            color: #28a745;
+        }
+        #messageArea { /* 메시지 출력 영역 스타일 */
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #d63031; /* 에러 메시지 색상 */
+            min-height: 2em; /* 메시지가 없을 때 공간 확보 */
+            text-align: center;
+            font-weight: bold;
+        }
+        .success-message {
+            color: #28a745; /* 성공 메시지 색상 */
+        }
+        .normal-message {
+            color: #555; /* 일반 메시지 색상 */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="info-text">
+        <p>계속을 눌러 숫자 강화</p>
+        <p>현재 돈: <span id="currentMoney">0</span>원</p>
+    </div>
+
+    <div class="container">
+        <div class="game-area"> <div class="button-group">
+                <button id="actionButton1">계속</button>
+                <button id="actionButton2">판매</button>
+            </div>
+            <div id="displayNumber">1</div>
+            <div class="button-group">
+                <button id="actionButton3">파괴 방지 구매 (100원)</button>
+            </div>
+        </div>
+        <div id="messageArea">게임 시작!</div> </div>
+
+    <script>
+        // 초기 게임 변수 설정
+        let a = 1; // 현재 숫자 값 (Python의 'a')
+        let c = 0; // 연속 성공 횟수 (Python의 'c')
+        let e = 0; // 현재 돈 (Python의 'e')
+
+        // HTML 요소 가져오기
+        const displayNumberElement = document.getElementById('displayNumber');
+        const currentMoneyElement = document.getElementById('currentMoney');
+        const actionButton1 = document.getElementById('actionButton1');
+        const actionButton2 = document.getElementById('actionButton2');
+        const actionButton3 = document.getElementById('actionButton3');
+        const messageArea = document.getElementById('messageArea'); // 메시지 영역 추가
+
+        // 메시지 출력 함수
+        function showMessage(msg, type = 'normal') {
+            messageArea.textContent = msg;
+            // 메시지 타입에 따라 클래스 추가/제거
+            messageArea.classList.remove('success-message', 'normal-message');
+            if (type === 'success') {
+                messageArea.classList.add('success-message');
+            } else if (type === 'normal') {
+                messageArea.classList.add('normal-message');
+            } else { // 기본은 error 메시지
+                messageArea.classList.remove('normal-message');
+                messageArea.classList.remove('success-message'); // 빨간색이 기본
+            }
+        }
+
+        // 화면 업데이트 및 버튼 활성화/비활성화 함수
+        function updateDisplay() {
+            displayNumberElement.textContent = a;
+            // 돈을 소수점 3자리에서 반올림하여 표시합니다.
+            currentMoneyElement.textContent = e.toFixed(3);
+
+            // '판매' 버튼 활성화/비활성화 로직
+            if (a === 1) {
+                actionButton2.disabled = true;
+            } else {
+                actionButton2.disabled = false;
+            }
+        }
+
+        // '계속 (엔터)' 버튼 클릭 시
+        actionButton1.addEventListener('click', () => {
+            const b = Math.floor(Math.random() * 2) + 1; // 1 또는 2 랜덤
+
+            if (b === 2) { // 파괴될 확률 (50%)
+                c = 0; // 연속 성공 횟수 초기화
+                a = 1; // 숫자를 1로 초기화
+                showMessage("실패! 숫자가 1로 초기화됩니다.", 'error');
+            } else { // 성공 (50%)
+                a = a * 2; // 숫자 2배 증가
+                c += 1; // 연속 성공 횟수 증가
+
+                let exclamationMarks = '';
+                if (c <= 10) {
+                    exclamationMarks = '!'.repeat(c - 1);
+                } else if (c <= 20) {
+                    exclamationMarks = '!?'.repeat(Math.floor((c - 2) / 2)) + ((c - 2) % 2 === 1 ? '!' : '');
+                } else {
+                    exclamationMarks = '?'.repeat(c - 2);
+                }
+                // 숫자와 느낌표/물음표를 같이 보여주고 메시지는 별도로 출력
+                displayNumberElement.textContent = `${a}${exclamationMarks}`; // 숫자 영역에 느낌표/물음표 표시
+                showMessage(`성공! ${a}로 증가했습니다.`, 'success');
+            }
+            updateDisplay(); // updateDisplay에서 displayNumberElement.textContent를 다시 설정하므로, 위에서 설정한 것은 임시로 보였다가 덮어씌워집니다.
+                                         // 만약 항상 느낌표/물음표를 함께 표시하고 싶다면, updateDisplay 함수에서 displayNumberElement.textContent = a; 부분을 수정해야 합니다.
+                                         // 여기서는 메시지 영역에 상세 정보를 출력하는 데 집중합니다.
+        });
+
+        // '판매 (1)' 버튼 클릭 시
+        actionButton2.addEventListener('click', () => {
+            if (a === 1) {
+                showMessage("숫자가 1일 때는 판매할 수 없습니다!", 'error');
+                return;
+            }
+
+            e += a * c * 0.8; // 현재 숫자를 돈에 추가
+            // 돈을 소수점 3자리에서 반올림하여 적용
+            e = parseFloat(e.toFixed(3)); 
+            showMessage(`${(a * c * 0.8).toFixed(3)}원 벌고, 숫자가 1로 초기화됩니다.`, 'success');
+            a = 1; // 숫자를 1로 초기화
+            c = 0; // 연속 성공 횟수 초기화
+            updateDisplay();
+        });
+
+        // '파괴 방지 구매 (2)' 버튼 클릭 시
+        actionButton3.addEventListener('click', () => {
+            if (e >= 100) {
+                e -= 100;
+                // 돈을 소수점 3자리에서 반올림하여 적용
+                e = parseFloat(e.toFixed(3));
+                showMessage("파괴 방지 구매 완료! (이 기능은 현재 구현되지 않았습니다. 그러니까 돈 먹은거임)", 'success');
+                // 실제 파괴 방지 로직은 여기에 추가해야 합니다.
+            } else {
+                showMessage("돈이 부족합니다!", 'error');
+            }
+            updateDisplay();
+        });
+
+        // 페이지 로드 시 초기 화면 업데이트
+        updateDisplay();
+    </script>
+</body>
+</html>
